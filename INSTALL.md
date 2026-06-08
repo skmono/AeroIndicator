@@ -28,10 +28,10 @@ cd -
 shasum -a 256 ~/AeroIndicator.zip
 
 # 6. Create local tap
-mkdir -p $(brew --repository)/Library/Taps/monolese/homebrew-apps/Formula
+mkdir -p $(brew --repository)/Library/Taps/$USER/homebrew-apps/Formula
 
 # 7. Write the formula (replace PASTE_SHA_HERE with output from step 5)
-cat > $(brew --repository)/Library/Taps/monolese/homebrew-apps/Formula/aeroindicator.rb << 'EOF'
+cat > $(brew --repository)/Library/Taps/$USER/homebrew-apps/Formula/aeroindicator.rb << 'EOF'
 class Aeroindicator < Formula
   desc "Workspace indicator for AeroSpace/yabai tiling window managers"
   homepage "https://github.com/skmono/AeroIndicator"
@@ -59,7 +59,7 @@ end
 EOF
 
 # 8. Install and start
-brew install monolese/apps/aeroindicator
+brew install $USER/apps/aeroindicator
 brew services start aeroindicator
 ```
 
