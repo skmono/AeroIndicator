@@ -92,7 +92,7 @@ struct AeroIndicatorWorkspaceApp: View {
     @ObservedObject var model: AppManager
 
     var body: some View {
-        if let image = AppIcon.shared.get(app.bundleId) {
+        if let image = AppIcon.shared.get(app.bundleId, appName: app.appName) {
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
