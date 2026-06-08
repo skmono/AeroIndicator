@@ -22,7 +22,9 @@ let defaultConfig = AeroConfig(
     innerPadding: 12,
     borderRadius: 12,
     fontSize: nil,
-    iconSize: 16
+    iconSize: 16,
+    offsetX: 0,
+    offsetY: 0
 )
 
 func readConfig() -> AeroConfig {
@@ -36,6 +38,8 @@ func readConfig() -> AeroConfig {
     let borderRadius = config?.doubleInt("border-radius") ?? defaultConfig.borderRadius
     let fontSize = config?.doubleInt("font-size") ?? defaultConfig.fontSize
     let iconSize = config?.doubleInt("icon-size") ?? defaultConfig.iconSize
+    let offsetX = config?.doubleInt("offset-x") ?? defaultConfig.offsetX
+    let offsetY = config?.doubleInt("offset-y") ?? defaultConfig.offsetY
 
     // Security: Validate source is one of the allowed values
     let validSources = ["aerospace", "yabai"]
@@ -52,7 +56,9 @@ func readConfig() -> AeroConfig {
         innerPadding: innerPadding,
         borderRadius: borderRadius,
         fontSize: fontSize,
-        iconSize: iconSize
+        iconSize: iconSize,
+        offsetX: offsetX,
+        offsetY: offsetY
     )
 }
 
@@ -64,6 +70,8 @@ struct AeroConfig {
     var borderRadius: Double
     var fontSize: Double?
     var iconSize: Double
+    var offsetX: Double
+    var offsetY: Double
 }
 
 extension Toml {

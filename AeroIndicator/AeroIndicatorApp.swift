@@ -45,6 +45,7 @@ struct AeroIndicatorApp: View {
                 }
             }
             .padding(.vertical, model.config.outerPadding)
+            .offset(x: model.config.offsetX, y: -model.config.offsetY)
             .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height)
         }
     }

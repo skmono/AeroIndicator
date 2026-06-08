@@ -3,7 +3,7 @@
 ## Install
 
 ```sh
-brew tap rien7/apps
+brew tap skmono/apps
 brew install --cask aeroindicator
 ```
 
