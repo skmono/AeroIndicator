@@ -15,6 +15,13 @@ func readConfigFile() -> String? {
     }
 }
 
+let defaultSeparatorConfig = SeparatorConfig(
+    enabled: false,
+    width: 1,
+    color: "gray",
+    height: 0.6
+)
+
 let defaultConfig = AeroConfig(
     source: "aerospace",
     position: "bottom-left",
@@ -24,7 +31,8 @@ let defaultConfig = AeroConfig(
     fontSize: nil,
     iconSize: 16,
     offsetX: 0,
-    offsetY: 0
+    offsetY: 0,
+    separator: defaultSeparatorConfig
 )
 
 func readConfig() -> AeroConfig {
@@ -40,6 +48,18 @@ func readConfig() -> AeroConfig {
     let iconSize = config?.doubleInt("icon-size") ?? defaultConfig.iconSize
     let offsetX = config?.doubleInt("offset-x") ?? defaultConfig.offsetX
     let offsetY = config?.doubleInt("offset-y") ?? defaultConfig.offsetY
+
+    let separatorEnabled = config?.bool("separator", "enabled") ?? defaultSeparatorConfig.enabled
+    let separatorWidth = config?.doubleInt("separator", "width") ?? defaultSeparatorConfig.width
+    let separatorColor = config?.string("separator", "color") ?? defaultSeparatorConfig.color
+    let separatorHeight = config?.doubleInt("separator", "height") ?? defaultSeparatorConfig.height
+
+    let separator = SeparatorConfig(
+        enabled: separatorEnabled,
+        width: separatorWidth,
+        color: separatorColor,
+        height: separatorHeight
+    )
 
     // Security: Validate source is one of the allowed values
     let validSources = ["aerospace", "yabai"]
@@ -58,8 +78,16 @@ func readConfig() -> AeroConfig {
         fontSize: fontSize,
         iconSize: iconSize,
         offsetX: offsetX,
-        offsetY: offsetY
+        offsetY: offsetY,
+        separator: separator
     )
+}
+
+struct SeparatorConfig {
+    var enabled: Bool
+    var width: Double
+    var color: String
+    var height: Double
 }
 
 struct AeroConfig {
@@ -72,6 +100,7 @@ struct AeroConfig {
     var iconSize: Double
     var offsetX: Double
     var offsetY: Double
+    var separator: SeparatorConfig
 }
 
 extension Toml {
@@ -80,6 +109,16 @@ extension Toml {
             return doubleResult
         }
         if let intResult = self.int(key) {
+            return Double(intResult)
+        }
+        return nil
+    }
+
+    func doubleInt(_ path: String...) -> Double? {
+        if let doubleResult = self.double(path) {
+            return doubleResult
+        }
+        if let intResult = self.int(path) {
             return Double(intResult)
         }
         return nil

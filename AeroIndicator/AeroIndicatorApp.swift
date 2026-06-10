@@ -19,7 +19,12 @@ struct AeroIndicatorApp: View {
                     }
                     HStack(spacing: 0) {
                         if !model.workspaces.isEmpty {
-                            ForEach(model.workspaces, id: \.self) { workspace in
+                            ForEach(
+                                Array(model.workspaces.enumerated()), id: \.element
+                            ) { index, workspace in
+                                if index > 0 && model.config.separator.enabled {
+                                    SeparatorView(config: model.config.separator, iconSize: model.config.iconSize)
+                                }
                                 AeroIndicatorWorkspace(
                                     workspace: workspace,
                                     model: model
@@ -98,6 +103,42 @@ struct AeroIndicatorWorkspaceApp: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: model.config.iconSize, height: model.config.iconSize)
+        }
+    }
+}
+
+struct SeparatorView: View {
+    var config: SeparatorConfig
+    var iconSize: Double
+
+    var body: some View {
+        Rectangle()
+            .fill(parseColor(config.color))
+            .frame(width: config.width, height: iconSize * config.height)
+            .padding(.horizontal, 4)
+    }
+
+    private func parseColor(_ value: String) -> Color {
+        if value.hasPrefix("#") {
+            let hex = String(value.dropFirst())
+            guard hex.count == 6, let rgb = UInt64(hex, radix: 16) else {
+                return .gray
+            }
+            let r = Double((rgb >> 16) & 0xFF) / 255.0
+            let g = Double((rgb >> 8) & 0xFF) / 255.0
+            let b = Double(rgb & 0xFF) / 255.0
+            return Color(red: r, green: g, blue: b)
+        }
+        switch value.lowercased() {
+        case "white": return .white
+        case "black": return .black
+        case "red": return .red
+        case "blue": return .blue
+        case "green": return .green
+        case "yellow": return .yellow
+        case "orange": return .orange
+        case "purple": return .purple
+        default: return .gray
         }
     }
 }
