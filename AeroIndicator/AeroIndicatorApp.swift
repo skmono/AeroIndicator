@@ -22,12 +22,10 @@ struct AeroIndicatorApp: View {
                             ForEach(
                                 Array(model.workspaces.enumerated()), id: \.element
                             ) { index, workspace in
-                                if index > 0 && model.config.separator.enabled {
-                                    SeparatorView(config: model.config.separator, iconSize: model.config.iconSize)
-                                }
                                 AeroIndicatorWorkspace(
                                     workspace: workspace,
-                                    model: model
+                                    model: model,
+                                    showLeadingSeparator: index > 0 && model.config.separator.enabled
                                 )
                             }
                         }
@@ -59,11 +57,15 @@ struct AeroIndicatorApp: View {
 struct AeroIndicatorWorkspace: View {
     var workspace: String
     @ObservedObject var model: AppManager
+    var showLeadingSeparator: Bool = false
     @State var apps: [AppDataType] = []
 
     var body: some View {
         HStack(spacing: 0) {
             if workspace == model.focusWorkspace || !apps.isEmpty {
+                if showLeadingSeparator {
+                    SeparatorView(config: model.config.separator, iconSize: model.config.iconSize)
+                }
                 HStack {
                     Text(workspace)
                         .font(
@@ -76,7 +78,7 @@ struct AeroIndicatorWorkspace: View {
                             )
                         )
                         .foregroundColor(
-                            model.focusWorkspace == workspace ? Color.red : Color.primary)
+                            model.focusWorkspace == workspace ? Color.green : Color.gray)
                     ForEach(apps) { app in
                         AeroIndicatorWorkspaceApp(app: app, model: model)
                     }
