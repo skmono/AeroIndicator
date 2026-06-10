@@ -20,12 +20,15 @@ func runApplication() {
 }
 
 func stopApplication() {
+    var appsToWatch: [NSRunningApplication] = []
+
     if let bundleID = Bundle.main.bundleIdentifier {
         let runningApps = NSRunningApplication.runningApplications(
             withBundleIdentifier: bundleID)
 
         for app in runningApps where app.processIdentifier != getpid() {
             app.forceTerminate()
+            appsToWatch.append(app)
         }
     }
 
@@ -34,6 +37,14 @@ func stopApplication() {
     task.arguments = ["-ix", "aeroindicator"]
     try? task.run()
     task.waitUntilExit()
+
+    // Wait for the old process to actually terminate (up to 3 seconds)
+    let deadline = Date().addingTimeInterval(3.0)
+    for app in appsToWatch {
+        while !app.isTerminated && Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+    }
 
     try? FileManager.default.removeItem(atPath: "/tmp/AeroIndicator")
 }

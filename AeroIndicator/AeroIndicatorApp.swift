@@ -72,7 +72,7 @@ struct AeroIndicatorWorkspace: View {
                         )
                         .foregroundColor(
                             model.focusWorkspace == workspace ? Color.red : Color.primary)
-                    ForEach(apps, id: \.bundleId) { app in
+                    ForEach(apps) { app in
                         AeroIndicatorWorkspaceApp(app: app, model: model)
                     }
                 }
