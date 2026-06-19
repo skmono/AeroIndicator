@@ -65,7 +65,7 @@ class Socket {
                     ofItemAtPath: socketPath
                 )
             } catch {
-                print("Warning: Could not set socket permissions: \(error)")
+                Log.shared.warn("Could not set socket permissions: \(error)")
             }
 
             guard listen(fd, 5) != -1 else {

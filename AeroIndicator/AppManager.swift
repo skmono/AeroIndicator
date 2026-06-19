@@ -5,6 +5,7 @@ class AppManager: ObservableObject {
     private var window: MainWindow<AeroIndicatorApp>?
     private var server: Socket?
     private var screenChangeObserver: NSObjectProtocol?
+    private var wakeObserver: NSObjectProtocol?
 
     @Published var workspaces: [String] = []
     @Published var focusWorkspace: String = ""
@@ -17,6 +18,9 @@ class AppManager: ObservableObject {
         // Clean up the screen change observer
         if let observer = screenChangeObserver {
             NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
     }
 
@@ -34,10 +38,12 @@ class AppManager: ObservableObject {
 
                 self.createWindow()
                 self.observeScreenChanges()
+                self.observeWake()
             }
         }
         startListeningKey()
         startListeningCommand()
+        Log.shared.info("Service started (pid \(getpid()))")
     }
 
     private func createWindow() {
@@ -71,6 +77,27 @@ class AppManager: ObservableObject {
         }
     }
 
+    private func observeWake() {
+        // On wake the key-release `flagsChanged` event that would normally hide
+        // the bar may never have been delivered (it happened while asleep).
+        // Reconcile against the actual modifier state instead of assuming.
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            let optionHeld = NSEvent.modifierFlags.contains(.option)
+            self.show = optionHeld
+            if optionHeld {
+                self.window?.orderFrontRegardless()
+            } else {
+                self.window?.orderOut(nil)
+            }
+            Log.shared.info("Woke from sleep, reconciled bar (optionHeld: \(optionHeld))")
+        }
+    }
+
     private func recreateWindow() {
         guard let screenFrame = NSScreen.main?.frame else { return }
         let statusBarHeight = NSStatusBar.system.thickness
@@ -84,6 +111,11 @@ class AppManager: ObservableObject {
         // Preserve the current visibility state
         let wasVisible = self.window?.isVisible ?? false
 
+        // Dismiss the existing window before dropping our reference to it.
+        // Otherwise the old panel stays on screen as an orphan we can no longer
+        // hide (the duplicate bar seen after sleep/wake display reconfiguration).
+        self.window?.orderOut(nil)
+
         // Recreate the window with new screen dimensions
         self.window = MainWindow(contentRect: contentRect) {
             AeroIndicatorApp(model: self)
@@ -95,6 +127,7 @@ class AppManager: ObservableObject {
         } else {
             self.window?.orderOut(nil)
         }
+        Log.shared.info("Window recreated (wasVisible: \(wasVisible))")
     }
 
     private func startListeningCommand() {
@@ -111,7 +144,7 @@ class AppManager: ObservableObject {
             // Security: Only allow specific commands (allowlist approach)
             let validCommands = ["workspace-change", "focus-change", "workspace-created-or-destroyed"]
             guard validCommands.contains(splitMessages[0]) else {
-                print("Warning: Rejected invalid command: \(splitMessages[0])")
+                Log.shared.warn("Rejected invalid command: \(splitMessages[0])")
                 return
             }
 
@@ -120,7 +153,7 @@ class AppManager: ObservableObject {
                 let workspace = splitMessages[1]
                 let allowedCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
                 guard workspace.rangeOfCharacter(from: allowedCharacters.inverted) == nil else {
-                    print("Warning: Rejected invalid workspace name: \(workspace)")
+                    Log.shared.warn("Rejected invalid workspace name: \(workspace)")
                     return
                 }
 
@@ -151,11 +184,15 @@ class AppManager: ObservableObject {
     private func startListeningKey() {
         func handleEvent(_ event: NSEvent) {
             if event.modifierFlags.contains(.option) {
+                if !self.show {
+                    Log.shared.info("Bar trigger: option pressed, showing bar")
+                }
                 self.show = true
                 DispatchQueue.main.async {
                     self.window?.orderFrontRegardless()
                 }
             } else if self.show {
+                Log.shared.info("Bar trigger: option released, hiding bar")
                 self.show = false
                 DispatchQueue.main.async {
                     self.window?.orderOut(nil)
